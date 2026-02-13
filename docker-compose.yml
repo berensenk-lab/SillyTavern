@@ -1,0 +1,43 @@
+﻿services:
+  sillytavern:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sillytavern
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - OLLAMA_API_URL=http://ollama:11434
+    volumes:
+      - ./data:/home/node/app/data
+      - ./config:/home/node/app/config
+    depends_on:
+      ollama:
+        condition: service_started
+    networks:
+      - sillytavern-net
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    networks:
+      - sillytavern-net
+    restart: unless-stopped
+
+networks:
+  sillytavern-net:
+    driver: bridge
+
+volumes:
+  ollama-data:
+    driver: local
