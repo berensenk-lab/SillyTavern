@@ -1,5 +1,23 @@
 #!/usr/bin/env bash
 
+# ========================================
+# OPTIONAL: Non-Docker Startup Script
+# ========================================
+#
+# This script runs SillyTavern natively on your machine (NOT in Docker).
+#
+# RECOMMENDED: Use Docker instead
+#   docker compose up
+#
+# See README_DOCKER.md for Docker setup
+# See STARTUP_SCRIPTS_GUIDE.md for all startup options
+#
+# Prerequisites for this script:
+#   - Node.js must be installed: https://nodejs.org/
+#   - npm must be available in PATH
+#
+# ========================================
+
 # Make sure pwd is the directory of the script
 cd "$(dirname "$0")"
 
