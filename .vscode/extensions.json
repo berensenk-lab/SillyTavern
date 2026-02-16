@@ -3,10 +3,40 @@
     // Extension identifier format: ${publisher}.${name}. Example: vscode.csharp
     // List of extensions which should be recommended for users of this workspace.
     "recommendations": [
+        // Core Development
         "dbaeumer.vscode-eslint",
         "EditorConfig.EditorConfig",
-        "mrcrowl.easy-less"
+        "mrcrowl.easy-less",
+
+        // JavaScript/TypeScript Support
+        "ms-vscode.vscode-typescript-next",
+        "xabikos.JavaScriptSnippets",
+
+        // VS Code Essentials
+        "eamodio.gitlens",
+        "esbenp.prettier-vscode",
+
+        // Productivity
+        "visualstudioexptteam.vscodeintellicode",
+        "usernamehw.errorlens",
+        "christian-kohler.path-intellisense",
+
+        // Theme & UI
+        "zhuangtongfa.Material-theme",
+        "PKief.material-icon-theme",
+
+        // Docker & DevOps
+        "ms-azuretools.vscode-docker",
+
+        // REST Client & API
+        "humao.rest-client",
+
+        // Git
+        "eamodio.gitlens"
     ],
     // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
-    "unwantedRecommendations": []
+    "unwantedRecommendations": [
+        "humia.zhongwen",
+        "formulahendry.auto-rename-tag"
+    ]
 }

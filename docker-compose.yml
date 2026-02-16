@@ -1,43 +1,125 @@
-﻿services:
+# Docker Compose configuration for SillyTavern + Ollama stack
+# 
+# Start the stack:
+#   docker compose up
+#
+# Stop the stack:
+#   docker compose down
+#
+# View logs:
+#   docker compose logs -f
+#
+# See DEVELOPMENT.md for comprehensive guide
+
+services:
+  # SillyTavern: Web UI and chat backend
   sillytavern:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: .                # Build context: root directory of this project
+      dockerfile: Dockerfile    # Uses the Dockerfile in the root
     container_name: sillytavern
+    
+    # Port mapping: container:host
+    # Access from host at: http://localhost:8000
     ports:
       - "8000:8000"
+    
+    # Environment variables for the application
     environment:
+      # Production mode: disables dev warnings
       - NODE_ENV=production
+      # Ollama API URL for internal Docker communication
+      # NOTE: This is used BY the container. External clients should use http://localhost:11434
       - OLLAMA_API_URL=http://ollama:11434
+    
+    # Volume mounts: bind local directories to container paths
+    # IMPORTANT: Only mount necessary directories, not the entire app (avoid overwriting built files)
     volumes:
+      # User data: chats, characters, etc.
+      # Persists on host at: ./data/
       - ./data:/home/node/app/data
+      # Configuration files
+      # Persists on host at: ./config/
       - ./config:/home/node/app/config
+    
+    # Dependency: ensure Ollama starts before SillyTavern
+    # If Ollama is down, SillyTavern will still start but won't have model access
     depends_on:
       ollama:
         condition: service_started
+    
+    # Custom network for inter-container communication
     networks:
       - sillytavern-net
+    
+    # Restart policy: automatically restart on failure
     restart: unless-stopped
+    
+    # Security: don't allow new privilege escalation
     security_opt:
       - no-new-privileges:true
+    
+    # Health check: monitor if container is responsive
+    # If health check fails repeatedly, restart the container
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:8000', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
+  # Ollama: LLM inference server
   ollama:
+    # Use official Ollama image
+    # NOTE: Pin to a specific version in production for reproducibility
     image: ollama/ollama:latest
     container_name: ollama
+    
+    # Port mapping: container:host
+    # Access from host at: http://localhost:11434
+    # Access from other containers: http://ollama:11434 (Docker DNS)
     ports:
       - "11434:11434"
+    
+    # Volume for model persistence
+    # Docker-managed volume (not bind mount) for better performance
+    # Models are stored on host at: ~/.docker/volumes/
     volumes:
+      # Ollama models and cache directory
       - ollama-data:/root/.ollama
+    
+    # Environment variables
     environment:
+      # Listen on all interfaces (0.0.0.0) so host can access it
       - OLLAMA_HOST=0.0.0.0:11434
+      # Optional: GPU support (uncomment if you have NVIDIA GPU)
+      # - CUDA_VISIBLE_DEVICES=0
+    
+    # Same network as SillyTavern for inter-container communication
     networks:
       - sillytavern-net
+    
+    # Restart policy: automatically restart on failure
     restart: unless-stopped
+    
+    # Performance: allow sufficient memory for models
+    # Adjust based on your system; llama3 needs ~8GB
+    # mem_limit: "10g"
 
+# Docker network for service-to-service communication
+# Both containers on this network can reach each other by service name
 networks:
   sillytavern-net:
     driver: bridge
+    # Containers can reach each other:
+    # - From sillytavern: http://ollama:11434
+    # - From ollama: http://sillytavern:8000
+    # - From host: http://localhost:8000 and http://localhost:11434
 
+# Named volumes for persistent data
 volumes:
+  # Docker-managed volume for Ollama models
+  # Benefits: better performance than bind mounts, Docker handles cleanup
+  # Location on host: /var/lib/docker/volumes/sillytavern_ollama-data/_data/
   ollama-data:
     driver: local
